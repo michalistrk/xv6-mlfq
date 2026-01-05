@@ -125,6 +125,12 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
+  //MLFQ fields initialization
+  p->level = 0;
+  p->ticks_used = 0;
+  p->wait_ticks = 0;
+
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
