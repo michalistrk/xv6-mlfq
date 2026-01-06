@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "defs.h"
 
+int quantum[4] = {4, 8, 16, 32}; //MLFQ priority level time slices
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
