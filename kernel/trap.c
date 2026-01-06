@@ -69,6 +69,28 @@ usertrap(void)
   } else if((which_dev = devintr()) != 0){
     if(which_dev == 2){ //timer interrupt
       p->ticks_used++;
+
+      //Loop through all processes
+      struct proc *q;
+      for(q = proc; q<&proc[NPROC]; q++){
+
+        if(q == p) continue;
+
+        acquire(&q->lock);
+
+        //Check if q is runnable and make sure it is not the currently running process
+        if(q != p && q->state == RUNNABLE){
+          q->wait_ticks++;
+
+          //Check for promotion eligibility
+          if(q->level > 0 && q->wait_ticks >= quantum[q->level]*10){
+            q->level--;
+            q->ticks_used = 0;
+            q->wait_ticks = 0;
+          }
+        }
+        release(&q->lock);
+      }
     }
   } else if((r_scause() == 15 || r_scause() == 13) &&
             vmfault(p->pagetable, r_stval(), (r_scause() == 13)? 1 : 0) != 0) {
