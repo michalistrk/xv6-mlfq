@@ -79,7 +79,7 @@ usertrap(void)
         acquire(&q->lock);
 
         //Check if q is runnable and make sure it is not the currently running process
-        if(q != p && q->state == RUNNABLE){
+        if(q->state == RUNNABLE){
           q->wait_ticks++;
 
           //Check for promotion eligibility
@@ -90,6 +90,23 @@ usertrap(void)
           }
         }
         release(&q->lock);
+
+      }
+      int do_yield = 0; //Flag to check if process should yield
+
+      if(p->ticks_used >= quantum[p->level]){//Check if p has used its time slice
+        if(p->level<3){
+          p->level++; //Demote
+        }
+
+        p->ticks_used = 0;
+        p->wait_ticks = 0;
+        do_yield = 1;
+
+      }
+
+      if(do_yield){
+        yield();
       }
     }
   } else if((r_scause() == 15 || r_scause() == 13) &&
@@ -104,9 +121,6 @@ usertrap(void)
   if(killed(p))
     kexit(-1);
 
-  // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
-    yield();
 
   prepare_return();
 
