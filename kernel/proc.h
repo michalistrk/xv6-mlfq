@@ -26,6 +26,8 @@ struct cpu {
   int intena;                 // Were interrupts enabled before push_off()?
 };
 
+extern int quantum[4];
+
 extern struct cpu cpus[NCPU];
 
 // per-process data for the trap handling code in trampoline.S.
@@ -110,3 +112,5 @@ struct proc {
   int ticks_used;
   int wait_ticks;
 };
+
+extern struct proc proc[NPROC];
