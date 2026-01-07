@@ -8,6 +8,8 @@
 
 int quantum[4] = {4, 8, 16, 32}; //MLFQ priority level time slices
 
+static int last_idx[4] = {0, 0, 0, 0}; //Last process ran at each priority level
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -447,24 +449,26 @@ scheduler(void)
 
     int found = 0;
     for(int lvl=0; lvl<=3 && !found; lvl++) {
-      for(p = proc; p < &proc[NPROC]; p++){
+      for(int i=0; i<NPROC; ++i){
+        int idx = (last_idx[lvl] + 1 + i) % NPROC;
+        p = &proc[idx];
         acquire(&p->lock);
-        if(p->level == lvl){
-          if(p->state == RUNNABLE) {
-            // Switch to chosen process.  It is the process's job
-            // to release its lock and then reacquire it
-            // before jumping back to us.
-            p->state = RUNNING;
-            c->proc = p;
-            swtch(&c->context, &p->context);
-  
-            // Process is done running for now.
-            // It should have changed its p->state before coming back.
-            c->proc = 0;
-            found = 1;
-            release(&p->lock);
-            break;
-          }
+        if(p->level == lvl && p->state == RUNNABLE) {
+          // Switch to chosen process.  It is the process's job
+          // to release its lock and then reacquire it
+          // before jumping back to us.
+          p->state = RUNNING;
+          c->proc = p;
+          last_idx[lvl] = idx;
+          
+          swtch(&c->context, &p->context);
+
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+          found = 1;
+          release(&p->lock);
+          break;
         }
         release(&p->lock);
       }
