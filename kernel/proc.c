@@ -707,3 +707,51 @@ procdump(void)
     printf("\n");
   }
 }
+
+int
+getpinfo(uint64 uaddr)
+{
+  struct pstat st;
+  struct proc *p;
+  int i;
+
+  memset(&st, 0, sizeof(st));
+
+  for(i = 0; i < NPROC; i++){
+    p = &proc[i];
+
+    // IMPORTANT lock order: wait_lock before p->lock (see comment in proc.c)
+    acquire(&wait_lock);
+    acquire(&p->lock);
+
+    if(p->state != UNUSED){
+      st.inuse[i] = 1;
+
+      st.pid[i] = p->pid;
+      st.state[i] = p->state;
+      st.sz[i] = p->sz;
+
+      st.level[i] = p->level;
+      st.ticks_used[i] = p->ticks_used;
+      st.wait_ticks[i] = p->wait_ticks;
+
+      if(p->parent)
+        st.ppid[i] = p->parent->pid;
+      else
+        st.ppid[i] = 0;
+
+      safestrcpy(st.name[i], p->name, sizeof(st.name[i]));
+    } else {
+      st.inuse[i] = 0;
+    }
+
+    release(&p->lock);
+    release(&wait_lock);
+  }
+
+  if(copyout(myproc()->pagetable, uaddr, (char*)&st, sizeof(st)) < 0)
+    return -1;
+
+  return 0;
+}
+
