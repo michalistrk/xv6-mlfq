@@ -114,3 +114,20 @@ struct proc {
 };
 
 extern struct proc proc[NPROC];
+
+struct pstat {
+  int inuse[NPROC];
+
+  int pid[NPROC];
+  int ppid[NPROC];
+  int state[NPROC];
+
+  uint64 sz[NPROC];
+
+  int level[NPROC];
+
+  int ticks_used[NPROC];
+  int wait_ticks[NPROC];
+
+  char name[NPROC][16];
+};
