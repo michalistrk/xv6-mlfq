@@ -1,6 +1,24 @@
 #define SBRK_ERROR ((char *)-1)
+#define NPROC 64
 
 struct stat;
+
+struct pstat {
+  int inuse[NPROC];
+
+  int pid[NPROC];
+  int ppid[NPROC];
+  int state[NPROC];
+
+  uint64 sz[NPROC];
+
+  int level[NPROC];
+
+  int ticks_used[NPROC];
+  int wait_ticks[NPROC];
+
+  char name[NPROC][16];
+};
 
 // system calls
 int fork(void);
@@ -24,6 +42,7 @@ int getpid(void);
 char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
+int getpinfo(struct pstat*);
 
 // ulib.c
 int stat(const char*, struct stat*);
